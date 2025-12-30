@@ -15,7 +15,7 @@ router.get('/notifications', authenticate, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: notifications
+      data: { notifications }
     });
   } catch (error) {
     console.error('Get notifications error:', error);

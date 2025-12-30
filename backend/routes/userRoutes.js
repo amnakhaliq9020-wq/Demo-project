@@ -90,10 +90,18 @@ router.post('/users/update-watch-history/', authenticate, async (req, res) => {
     const { videoId } = req.body;
     const user = await User.findById(req.user._id);
 
-    if (!user.watchHistory.includes(videoId)) {
-      user.watchHistory.push(videoId);
-      await user.save();
-    }
+    // Remove existing entry if exists
+    user.watchHistory = user.watchHistory.filter(
+      entry => entry.video?.toString() !== videoId
+    );
+
+    // Add new entry with watchedAt timestamp
+    user.watchHistory.push({
+      video: videoId,
+      watchedAt: new Date()
+    });
+
+    await user.save();
 
     res.status(200).json({
       success: true,
@@ -113,13 +121,19 @@ router.post('/users/update-watch-history/', authenticate, async (req, res) => {
 router.get('/users/watch-history', authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate({
-      path: 'watchHistory',
+      path: 'watchHistory.video',
       populate: { path: 'owner', select: 'username fullname avatar' }
     });
 
+    // Transform to include watchedAt
+    const watchHistory = (user.watchHistory || []).map(entry => ({
+      ...entry.video?.toObject(),
+      watchedAt: entry.watchedAt
+    })).filter(v => v._id); // Filter out null videos
+
     res.status(200).json({
       success: true,
-      data: user.watchHistory || []
+      data: watchHistory
     });
   } catch (error) {
     console.error('Get watch history error:', error);
@@ -131,42 +145,40 @@ router.get('/users/watch-history', authenticate, async (req, res) => {
   }
 });
 
-// Delete from watch history
+// Delete from watch history or clear all
 router.delete('/users/watch-history', authenticate, async (req, res) => {
   try {
-    const { videoId } = req.body;
     const user = await User.findById(req.user._id);
+    
+    // Check if request has body with videoId
+    let videoId = null;
+    if (req.body && Object.keys(req.body).length > 0) {
+      videoId = req.body.videoId;
+    }
 
-    user.watchHistory = user.watchHistory.filter(id => id.toString() !== videoId);
-    await user.save();
+    if (videoId) {
+      // Delete specific video
+      user.watchHistory = user.watchHistory.filter(
+        entry => entry.video?.toString() !== videoId
+      );
+      await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: 'Video removed from watch history'
-    });
+      res.status(200).json({
+        success: true,
+        message: 'Video removed from watch history'
+      });
+    } else {
+      // Clear all watch history
+      user.watchHistory = [];
+      await user.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Watch history cleared'
+      });
+    }
   } catch (error) {
     console.error('Delete watch history error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// Clear watch history
-router.delete('/users/watch-history/clear', authenticate, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    user.watchHistory = [];
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Watch history cleared'
-    });
-  } catch (error) {
-    console.error('Clear watch history error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

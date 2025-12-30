@@ -13,9 +13,13 @@ router.post('/likes/toggle-video-like/:videoId', authenticate, async (req, res) 
 
     let like = await Like.findOne({ video: videoId, likedBy: userId });
 
-    if (like) {
+    if (like && like.isLiked) {
       // Unlike
       await Like.findByIdAndDelete(like._id);
+      
+      // Decrement like count
+      await Video.findByIdAndUpdate(videoId, { $inc: { likes: -1 } });
+      
       res.status(200).json({
         success: true,
         message: 'Video unliked',
@@ -24,14 +28,25 @@ router.post('/likes/toggle-video-like/:videoId', authenticate, async (req, res) 
     } else {
       // Like
       // Remove dislike if exists
-      await Like.findOneAndDelete({ video: videoId, likedBy: userId, isLiked: false });
+      const dislike = await Like.findOne({ video: videoId, likedBy: userId, isLiked: false });
+      if (dislike) {
+        await Like.findByIdAndDelete(dislike._id);
+        await Video.findByIdAndUpdate(videoId, { $inc: { dislikes: -1 } });
+      }
       
-      like = new Like({
-        video: videoId,
-        likedBy: userId,
-        isLiked: true
-      });
-      await like.save();
+      if (!like) {
+        like = new Like({
+          video: videoId,
+          likedBy: userId,
+          isLiked: true
+        });
+        await like.save();
+        await Video.findByIdAndUpdate(videoId, { $inc: { likes: 1 } });
+      } else {
+        like.isLiked = true;
+        await like.save();
+        await Video.findByIdAndUpdate(videoId, { $inc: { likes: 1 } });
+      }
 
       res.status(200).json({
         success: true,
@@ -60,6 +75,8 @@ router.post('/likes/toggle-video-dislike/:videoId', authenticate, async (req, re
     if (like && !like.isLiked) {
       // Remove dislike
       await Like.findByIdAndDelete(like._id);
+      await Video.findByIdAndUpdate(videoId, { $inc: { dislikes: -1 } });
+      
       res.status(200).json({
         success: true,
         message: 'Video undisliked',
@@ -68,14 +85,24 @@ router.post('/likes/toggle-video-dislike/:videoId', authenticate, async (req, re
     } else {
       // Dislike
       // Remove like if exists
-      if (like) await Like.findByIdAndDelete(like._id);
+      if (like && like.isLiked) {
+        await Like.findByIdAndDelete(like._id);
+        await Video.findByIdAndUpdate(videoId, { $inc: { likes: -1 } });
+      }
       
-      like = new Like({
-        video: videoId,
-        likedBy: userId,
-        isLiked: false
-      });
-      await like.save();
+      if (!like) {
+        like = new Like({
+          video: videoId,
+          likedBy: userId,
+          isLiked: false
+        });
+        await like.save();
+        await Video.findByIdAndUpdate(videoId, { $inc: { dislikes: 1 } });
+      } else {
+        like.isLiked = false;
+        await like.save();
+        await Video.findByIdAndUpdate(videoId, { $inc: { dislikes: 1 } });
+      }
 
       res.status(200).json({
         success: true,
@@ -108,7 +135,10 @@ router.get('/likes/liked-videos', authenticate, async (req, res) => {
 
     const likedVideos = likes
       .filter(like => like.video)
-      .map(like => like.video);
+      .map(like => ({
+        video: like.video,
+        _id: like.video._id
+      }));
 
     res.status(200).json({
       success: true,
@@ -139,7 +169,10 @@ router.get('/likes/disliked-videos', authenticate, async (req, res) => {
 
     const dislikedVideos = likes
       .filter(like => like.video)
-      .map(like => like.video);
+      .map(like => ({
+        video: like.video,
+        _id: like.video._id
+      }));
 
     res.status(200).json({
       success: true,

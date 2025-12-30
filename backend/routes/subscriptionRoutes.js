@@ -92,11 +92,17 @@ router.get('/subscription/subscribers/:channelId', async (req, res) => {
   try {
     const { channelId } = req.params;
 
-    const subscribersCount = await Subscription.countDocuments({ channel: channelId });
+    const subscriptions = await Subscription.find({ channel: channelId })
+      .populate('subscriber', 'username fullname avatar');
+
+    const subscribersCount = subscriptions.length;
 
     res.status(200).json({
       success: true,
-      data: { subscribersCount }
+      data: {
+        subscribers: subscriptions,
+        numberOfSubscribers: subscribersCount
+      }
     });
   } catch (error) {
     console.error('Get subscribers error:', error);

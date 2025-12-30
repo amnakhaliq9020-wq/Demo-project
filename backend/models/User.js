@@ -66,8 +66,14 @@ const userSchema = new mongoose.Schema({
     default: null
   },
   watchHistory: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Video'
+    video: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Video'
+    },
+    watchedAt: {
+      type: Date,
+      default: Date.now
+    }
   }]
 }, {
   timestamps: true
