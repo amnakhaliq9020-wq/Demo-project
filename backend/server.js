@@ -1,9 +1,15 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { readFileSync } from 'fs';
 import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import { testEmailConfig } from './utils/emailService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load environment variables
 dotenv.config();
@@ -41,6 +47,17 @@ app.get('/health', (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString()
   });
+});
+
+// Testing page route
+app.get('/test', (req, res) => {
+  try {
+    const htmlPath = join(__dirname, 'test.html');
+    const html = readFileSync(htmlPath, 'utf8');
+    res.send(html);
+  } catch (error) {
+    res.status(500).send('Testing page not found');
+  }
 });
 
 // Routes
@@ -82,6 +99,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📡 API URL: http://localhost:${PORT}`);
+      console.log(`🧪 Testing Page: http://localhost:${PORT}/test`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (error) {
