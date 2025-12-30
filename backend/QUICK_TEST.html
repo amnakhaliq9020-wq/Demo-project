@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VidShare API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .api-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #14b8a6;
+        }
+        .api-section h2 {
+            color: #14b8a6;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+        button {
+            background: #14b8a6;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0d9488;
+        }
+        .response {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .response.success {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        .response.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 12px;
+        }
+        .token-display {
+            background: #1e293b;
+            color: #10b981;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin-top: 10px;
+        }
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .info-box strong {
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 VidShare API Tester</h1>
+        <p class="subtitle">Test Login, Signup, and Email Verification APIs</p>
+
+        <div class="info-box">
+            <strong>Base URL:</strong> http://localhost:5000<br>
+            <strong>Note:</strong> Make sure backend server is running: <code>npm run dev</code>
+        </div>
+
+        <!-- Register Section -->
+        <div class="api-section">
+            <h2>1. Register User (Sign Up)</h2>
+            <div class="form-group">
+                <label>Full Name:</label>
+                <input type="text" id="regFullname" value="Test User" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="regEmail" value="test@example.com" placeholder="john@example.com">
+            </div>
+            <div class="form-group">
+                <label>Username:</label>
+                <input type="text" id="regUsername" value="testuser" placeholder="johndoe">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="regPassword" value="test123" placeholder="password123">
+            </div>
+            <button onclick="registerUser()">Register</button>
+            <div id="registerResponse" class="response" style="display:none;"></div>
+        </div>
+
+        <!-- Verify Email Section -->
+        <div class="api-section">
+            <h2>2. Verify Email</h2>
+            <div class="info-box">
+                <strong>Note:</strong> After registration, check your email for verification link. Copy userId and token from email.
+            </div>
+            <div class="form-group">
+                <label>User ID:</label>
+                <input type="text" id="verifyUserId" placeholder="65a1b2c3d4e5f6g7h8i9j0k1">
+            </div>
+            <div class="form-group">
+                <label>Verification Token:</label>
+                <input type="text" id="verifyToken" placeholder="abc123def456...">
+            </div>
+            <button onclick="verifyEmail()">Verify Email</button>
+            <div id="verifyResponse" class="response" style="display:none;"></div>
+        </div>
+
+        <!-- Login Section -->
+        <div class="api-section">
+            <h2>3. Login</h2>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="loginEmail" value="test@example.com" placeholder="john@example.com">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="loginPassword" value="test123" placeholder="password123">
+            </div>
+            <button onclick="loginUser()">Login</button>
+            <div id="loginResponse" class="response" style="display:none;"></div>
+            <div id="tokenDisplay" style="display:none;"></div>
+        </div>
+
+        <!-- Get Current User Section -->
+        <div class="api-section">
+            <h2>4. Get Current User (Protected Route)</h2>
+            <div class="form-group">
+                <label>Access Token:</label>
+                <textarea id="currentUserToken" placeholder="Paste access token from login response"></textarea>
+            </div>
+            <button onclick="getCurrentUser()">Get Current User</button>
+            <div id="currentUserResponse" class="response" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        async function registerUser() {
+            const data = {
+                fullname: document.getElementById('regFullname').value,
+                email: document.getElementById('regEmail').value,
+                username: document.getElementById('regUsername').value,
+                password: document.getElementById('regPassword').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/users/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                displayResponse('registerResponse', result, response.ok);
+            } catch (error) {
+                displayResponse('registerResponse', { error: error.message }, false);
+            }
+        }
+
+        async function verifyEmail() {
+            const userId = document.getElementById('verifyUserId').value;
+            const token = document.getElementById('verifyToken').value;
+
+            if (!userId || !token) {
+                alert('Please enter User ID and Token');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/users/verify/${userId}/${token}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+                displayResponse('verifyResponse', result, response.ok);
+            } catch (error) {
+                displayResponse('verifyResponse', { error: error.message }, false);
+            }
+        }
+
+        async function loginUser() {
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/users/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                displayResponse('loginResponse', result, response.ok);
+                
+                if (response.ok && result.data && result.data.accessToken) {
+                    document.getElementById('currentUserToken').value = result.data.accessToken;
+                    document.getElementById('tokenDisplay').innerHTML = 
+                        '<div class="token-display"><strong>Access Token:</strong><br>' + 
+                        result.data.accessToken + '</div>';
+                    document.getElementById('tokenDisplay').style.display = 'block';
+                }
+            } catch (error) {
+                displayResponse('loginResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getCurrentUser() {
+            const token = document.getElementById('currentUserToken').value;
+
+            if (!token) {
+                alert('Please enter access token');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/users/current-user`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+                displayResponse('currentUserResponse', result, response.ok);
+            } catch (error) {
+                displayResponse('currentUserResponse', { error: error.message }, false);
+            }
+        }
+
+        function displayResponse(elementId, data, isSuccess) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'response ' + (isSuccess ? 'success' : 'error');
+            element.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+    </script>
+</body>
+</html>
+
